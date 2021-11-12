@@ -1,5 +1,7 @@
 package com.amazonaws.lambda.demo;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -17,26 +19,27 @@ public class SavePerson implements RequestHandler<LinkedHashMap<String, String>,
     final public String LASTNAME = "lastName";
     final public String TABLENAME = "HelloWorldDatabase";
     final public String ID = "ID";
+    final public String LATESTGREETINGTIME = "LatestGreetingTime";
     @Override
     public LinkedHashMap<String, String> handleRequest(LinkedHashMap<String, String> input, Context context) {
-        context.getLogger().log("Input: " + input);
-        // TODO: implement your handler
-
         Map<String,String> name = new LinkedHashMap<>(input);
+
+        //DynamoDBに接続してHelloWorldDatabaseテーブルを更新する
         AmazonDynamoDB client = AmazonDynamoDBAsyncClientBuilder.standard().build();
         DynamoDB dynamoDB = new DynamoDB(client);
-
         Table table = dynamoDB.getTable(TABLENAME);
+        //テーブルに格納するためにItemオブジェクトを呼び出す
         Item item = new Item();
+        SimpleDateFormat now = new SimpleDateFormat("E,dd MMM yyyy HH:mm:ss +0000");
         item.with(ID, name.get(FIRSTNAME)+ " "+name.get(LASTNAME));
+        item.with(LATESTGREETINGTIME,now.format(new Date()));
+        //テーブルの更新
         table.putItem(item);
-        /*
-         *
-         * githubに上げて、リポジトリを新たに作る。
-         * git for Windowsを入れてもよい
-         * リポジトリ上げる時に神野さんに会議かけて*/
+
+        //htmlに返すjsonを用意する
         Map<String,String> result = new LinkedHashMap<>();
         result.put("body", "Hello from Lambda "+ name.get(FIRSTNAME)+ " "+name.get(LASTNAME));
+
         return (LinkedHashMap<String, String>) result;
     }
 
