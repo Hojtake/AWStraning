@@ -5,13 +5,14 @@ tmp/
 *.tmp
 *.bak
 *.swp
-*.lst
-*.xml
 *~.nib
 local.properties
 .settings/
 .loadpath
 .recommenders
+
+#target
+target
 
 # External tool builders
 .externalToolBuilders/
