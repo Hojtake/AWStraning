@@ -5,6 +5,8 @@ tmp/
 *.tmp
 *.bak
 *.swp
+*.lst
+*.xml
 *~.nib
 local.properties
 .settings/
