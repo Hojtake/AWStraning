@@ -30,6 +30,7 @@
         border-radius: 10px;
         color: aliceblue;
         background-color: rgb(14, 159, 255,0.5);
+        min-height: 300px;
     }
    
     .output-area>p{
@@ -54,20 +55,25 @@
                 redirect: 'follow'
             };
             // make API call with parameters and use promises to get response
-            fetch("https://ggjed8lfng.execute-api.ap-northeast-1.amazonaws.com/dev", requestOptions)
+            fetch("https://y3i70600kh.execute-api.ap-northeast-1.amazonaws.com/dev", requestOptions)
             .then(response => response.json())
             .then(result =>{
                 const outputData = document.getElementById('outputlist');
+                while(outputData.firstChild){
+                    outputData.firstChild.remove();
+                }
+
                 const greeting = document.createElement('p');
                 greeting.textContent = `Hello from Lambda ${result.firstName} ${result.lastName}`;
                 const firstNameData = document.createElement('ol');
                 firstNameData.textContent = `FirstName:${result.firstName}`;
                 const lastNameData = document.createElement('ol');
-                lastNameData.textContent = `lastName:${result.lastName}`;
+                lastNameData.textContent = `LastName:${result.lastName}`;
                 const birthdayData = document.createElement('ol');
                 birthdayData.textContent = `生年月日:${result.birthday}`;
                 const ageData = document.createElement('ol');
-                birthdayData.textContent = `年齢:${result.age}`;
+                ageData.textContent = `年齢:${result.age}`;
+                outputData.appendChild(greeting);
                 outputData.appendChild(firstNameData);
                 outputData.appendChild(lastNameData);
                 outputData.appendChild(birthdayData);
@@ -83,7 +89,7 @@
         <input type="text" id="fName">
         <label>Last Name :</label>
         <input type="text" id="lName">
-        <label>Birthday</label>
+        <label>Birthday :</label>
         <input type="text" id="Birthday" placeholder="yyyy/mm/dd">
         <!-- set button onClick method to call function we defined passing input values as parameters -->
         <button type="button" onclick="callAPI(document.getElementById('fName').value,document.getElementById('lName').value,document.getElementById('Birthday').value);console.log('post');">Call API</button>

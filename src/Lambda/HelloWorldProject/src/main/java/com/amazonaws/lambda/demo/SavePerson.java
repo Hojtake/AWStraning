@@ -32,11 +32,12 @@ public class SavePerson implements RequestHandler<LinkedHashMap<String, String>,
         //データベースに格納するためにItemオブジェクトを呼び出し、登録する
         Item item = new Item();
         SimpleDateFormat now = new SimpleDateFormat("E,dd MMM yyyy HH:mm:ss +0000");
-        SimpleDateFormat birthday = new SimpleDateFormat("yyyy/mm/dd");
+        SimpleDateFormat birthday = new SimpleDateFormat("yyyy/MM/dd");
         birthday.setLenient(false);
         item.with(COL_ID, person.get("firstName")+ " "+person.get("lastName"));
         item.with(COL_LATESTGREETINGTIME,now.format(new Date()));
-        String birthdayData = person.get(COL_BIRTHDAY);
+        String birthdayData = person.get("birthday");
+
 
         if(birthdayData == ""){
             //仕様に従い空白の場合もnullに変換する
@@ -44,23 +45,24 @@ public class SavePerson implements RequestHandler<LinkedHashMap<String, String>,
         }else{
             try {
                 birthday.parse(birthdayData);
-                //簡易に計算できるように設定した日付表現
-                SimpleDateFormat calAge = new SimpleDateFormat("yyyy.MMdd");
                 //整数部分を年、小数部分を月日にした数値で計算し、整数型にキャストすることで年齢を出す。
-                age = String.valueOf(
+                SimpleDateFormat calAge = new SimpleDateFormat("yyyy.MMdd");
+                age = String.valueOf((int)(
                         Double.parseDouble(calAge.format(new Date()))
-                        -Double.parseDouble(calAge.format(birthday.parse(birthdayData))));
+                        -Double.parseDouble(calAge.format(birthday.parse(birthdayData)))));
                 //今回仕様に指定がないのでString型でデータベースに登録する
                 item.with(COL_BIRTHDAY,birthdayData );
             } catch (ParseException e) {
                 //フォーマットに従っていなかった場合は仕様に従いnullを格納する
                 item.with(COL_BIRTHDAY, null);
+                //正規の生年月日が入力されなかった場合webページ上での出力は--とした。
+                person.put("birthday","--");
             }
         }
         table.putItem(item);
 
         person.put("age",age);
-
+        //webページでJSで出力を行うので出力に必要なデータだけを返す。
         return (LinkedHashMap<String, String>) person;
     }
 
