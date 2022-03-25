@@ -16,12 +16,10 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 
 
 public class SavePerson implements RequestHandler<LinkedHashMap<String, String>, LinkedHashMap<String, String>> {
-    final public String FIRSTNAME = "firstName";
-    final public String LASTNAME = "lastName";
     final public String TABLENAME = "HelloWorldDatabase";
-    final public String ID = "ID";
-    final public String LATESTGREETINGTIME = "LatestGreetingTime";
-    final public String BIRTHDAY ="birthday";
+    final public String COL_ID = "ID";
+    final public String COL_LATESTGREETINGTIME = "LatestGreetingTime";
+    final public String COL_BIRTHDAY ="birthday";
     @Override
     public LinkedHashMap<String, String> handleRequest(LinkedHashMap<String, String> input, Context context) {
         Map<String,String> person = new LinkedHashMap<>(input);
@@ -30,37 +28,42 @@ public class SavePerson implements RequestHandler<LinkedHashMap<String, String>,
         AmazonDynamoDB client = AmazonDynamoDBAsyncClientBuilder.standard().build();
         DynamoDB dynamoDB = new DynamoDB(client);
         Table table = dynamoDB.getTable(TABLENAME);
-        //テーブルに格納するためにItemオブジェクトを呼び出す
+        String age = "--";
+        //データベースに格納するためにItemオブジェクトを呼び出し、登録する
         Item item = new Item();
         SimpleDateFormat now = new SimpleDateFormat("E,dd MMM yyyy HH:mm:ss +0000");
-        SimpleDateFormat birthday = new SimpleDateFormat("yyyy/mm/dd");
+        SimpleDateFormat birthday = new SimpleDateFormat("yyyy/MM/dd");
         birthday.setLenient(false);
-        item.with(ID, person.get(FIRSTNAME)+ " "+person.get(LASTNAME));
-        item.with(LATESTGREETINGTIME,now.format(new Date()));
-        String birthdayData = person.get(BIRTHDAY);
-        //空文字チェック
+        item.with(COL_ID, person.get("firstName")+ " "+person.get("lastName"));
+        item.with(COL_LATESTGREETINGTIME,now.format(new Date()));
+        String birthdayData = person.get("birthday");
+
+
         if(birthdayData == ""){
-            //空文字の場合はnullを格納
+            //仕様に従い空白の場合もnullに変換する
             birthdayData = null;
         }else{
             try {
-                //フォーマットに合った形かチェック
                 birthday.parse(birthdayData);
-                //入力されたデータがフォーマットに合っていた場合itemインスタンスに追加、今回はString型で入れる
-                item.with(BIRTHDAY,birthdayData );
+                //整数部分を年、小数部分を月日にした数値で計算し、整数型にキャストすることで年齢を出す。
+                SimpleDateFormat calAge = new SimpleDateFormat("yyyy.MMdd");
+                age = String.valueOf((int)(
+                        Double.parseDouble(calAge.format(new Date()))
+                        -Double.parseDouble(calAge.format(birthday.parse(birthdayData)))));
+                //今回仕様に指定がないのでString型でデータベースに登録する
+                item.with(COL_BIRTHDAY,birthdayData );
             } catch (ParseException e) {
-                //フォーマットに従っていなかった場合はnullを格納
-                item.with(BIRTHDAY, null);
+                //フォーマットに従っていなかった場合は仕様に従いnullを格納する
+                item.with(COL_BIRTHDAY, null);
+                //正規の生年月日が入力されなかった場合webページ上での出力は--とした。
+                person.put("birthday","--");
             }
         }
-        //テーブルの更新
         table.putItem(item);
 
-        //htmlに返すjsonを用意する
-        Map<String,String> result = new LinkedHashMap<>();
-        result.put("body", "Hello from Lambda "+ person.get(FIRSTNAME)+ " "+person.get(LASTNAME));
-
-        return (LinkedHashMap<String, String>) result;
+        person.put("age",age);
+        //webページでJSで出力を行うので出力に必要なデータだけを返す。
+        return (LinkedHashMap<String, String>) person;
     }
 
 }
